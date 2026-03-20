@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTrack • smart attendance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.2s ease;
+            line-height: 1.5;
+        }
+
+        /* ------------- LIGHT / DARK THEME (smooth) ------------- */
+        :root {
+            --bg-primary: #f4f7fd;
+            --bg-surface: #ffffff;
+            --bg-surface-soft: #f0f3f9;
+            --text-primary: #13294b;
+            --text-secondary: #2d3a5e;
+            --accent-start: #4158D0;
+            --accent-end: #C850C0;
+            --accent-glow: rgba(65, 88, 208, 0.3);
+            --card-shadow: 0 20px 35px -10px rgba(0, 20, 50, 0.15);
+            --border-light: #dee5f0;
+            --stat-bg: rgba(255,255,255,0.7);
+            --btn-primary: #ff6f61;
+            --btn-primary-hover: #e65b50;
+            --input-bg: #ffffff;
+        }
+
+        body.dark {
+            --bg-primary: #0b1120;
+            --bg-surface: #1a2332;
+            --bg-surface-soft: #222d42;
+            --text-primary: #f0f4ff;
+            --text-secondary: #b7c9e2;
+            --accent-start: #6c5ce7;
+            --accent-end: #a463b8;
+            --accent-glow: rgba(108, 92, 231, 0.4);
+            --card-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.6);
+            --border-light: #2f3b54;
+            --stat-bg: rgba(26, 35, 50, 0.8);
+            --btn-primary: #f97316;
+            --btn-primary-hover: #fb923c;
+            --input-bg: #1e293b;
+        }
+
+        /* ------------- reusable glassmorphism ------------- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 32px;
+        }
+
+        /* ------------- hero section (image perfectly fitted) ------------- */
+        .hero {
+            min-height: 90vh;
+            background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 6%;
+            position: relative;
+            overflow: hidden;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.2) 0%, transparent 50%),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.15"/><circle cx="80" cy="40" r="3" fill="white" opacity="0.1"/><circle cx="45" cy="85" r="2" fill="white" opacity="0.1"/></svg>');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            max-width: 600px;
+            z-index: 3;
+            flex: 1 1 400px;
+            animation: fadeUp 1s ease;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.8rem, 7vw, 4.2rem);
+            font-weight: 800;
+            background: linear-gradient(to right, #fff, #ffe6f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.2rem;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 2.5rem;
+            max-width: 550px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .feature-badges {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2.8rem;
+        }
+
+        .badge {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(8px);
+            padding: 0.7rem 1.4rem;
+            border-radius: 60px;
+            border: 1px solid rgba(255,255,255,0.25);
+            font-weight: 500;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.9rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            display: inline-block;
+            border: 2px solid transparent;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--accent-start);
+            border: 2px solid white;
+        }
+        .btn-primary:hover {
+            background: transparent;
+            color: white;
+            border-color: white;
+            transform: translateY(-4px);
+            box-shadow: 0 18px 30px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+            backdrop-filter: blur(8px);
+        }
+        .btn-secondary:hover {
+            background: white;
+            color: var(--accent-start);
+            border-color: white;
+            transform: translateY(-4px);
+        }
+
+        /* image container — makes unsplash fit beautifully */
+        .hero-image {
+            flex: 1 1 380px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            filter: drop-shadow(0 25px 35px rgba(0,0,0,0.3));
+        }
+
+        .hero-image .img-wrapper {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 40% 60% 40% 60% / 50% 40% 60% 50%;
+            overflow: hidden;
+            aspect-ratio: 1/1;
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 30px 40px -10px rgba(0,0,0,0.5);
+            border: 4px solid rgba(255,255,255,0.25);
+            animation: morph 8s ease-in-out infinite;
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;           /* ← image fits perfectly without distortion */
+            display: block;
+            transition: transform 0.4s ease;
+        }
+        .hero-image img:hover {
+            transform: scale(1.03);
+        }
+
+        @keyframes morph {
+            0% { border-radius: 40% 60% 40% 60% / 50% 40% 60% 50%; }
+            50% { border-radius: 60% 40% 60% 40% / 40% 60% 40% 60%; }
+            100% { border-radius: 40% 60% 40% 60% / 50% 40% 60% 50%; }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ------------- stats panel (attractive) ------------- */
+        .stats-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 8%;
+            background: var(--stat-bg);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-light);
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .stats {
+            display: flex;
+            gap: 3.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+        .stat h2 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(145deg, var(--accent-start), var(--accent-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        .stat p {
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.02rem;
+        }
+
+        .theme-toggle {
+            display: flex;
+            gap: 0.6rem;
+            background: var(--bg-surface);
+            padding: 0.5rem;
+            border-radius: 50px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .theme-btn {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: 0.15s;
+        }
+        .theme-btn.active {
+            background: var(--accent-start);
+            color: white;
+        }
+
+        /* ------------- main interactive section (split) ------------- */
+        .dashboard {
+            padding: 3rem 8%;
+            background: var(--bg-primary);
+        }
+
+        .split-layout {
+            display: flex;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .attendance-col {
+            flex: 2 1 450px;
+        }
+
+        .form-col {
+            flex: 1 1 320px;
+        }
+
+        /* ----- attendance controls & cards ----- */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, var(--accent-start), var(--accent-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .add-subject {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .input-field {
+            padding: 0.7rem 1.5rem;
+            border-radius: 60px;
+            border: 1px solid var(--border-light);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            min-width: 210px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .input-field:focus {
+            outline: 2px solid var(--accent-start);
+            outline-offset: 2px;
+        }
+
+        .btn-add {
+            background: var(--accent-start);
+            color: white;
+            border: none;
+            padding: 0.7rem 2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 8px 16px var(--accent-glow);
+        }
+        .btn-add:hover {
+            background: var(--accent-end);
+            transform: scale(1.02);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.8rem;
+            margin-top: 1.5rem;
+        }
+
+        .attendance-card {
+            background: var(--bg-surface);
+            border-radius: 32px;
+            padding: 1.8rem 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+            transition: all 0.25s;
+            position: relative;
+            backdrop-filter: blur(4px);
+        }
+        .attendance-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-start);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            padding-right: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-badge {
+            background: #10b981;
+            color: white;
+            padding: 0.2rem 1rem;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .status-badge.absent {
+            background: #ef4444;
+        }
+
+        .card-footer {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .small-btn {
+            background: var(--bg-surface-soft);
+            border: 1px solid var(--border-light);
+            border-radius: 40px;
+            padding: 0.4rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: 0.1s;
+        }
+        .small-btn:hover {
+            background: var(--accent-start);
+            color: white;
+            border-color: var(--accent-start);
+        }
+        .delete-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* ----- contact form (glass attractive) ----- */
+        .form-card {
+            background: var(--bg-surface);
+            border-radius: 40px;
+            padding: 2.2rem 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+            position: sticky;
+            top: 2rem;
+        }
+        .form-card h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: linear-gradient(145deg, var(--accent-start), var(--accent-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.4rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+        }
+        .form-group input,
+        .form-group textarea {
+            padding: 0.9rem 1.5rem;
+            border-radius: 60px;
+            border: 1px solid var(--border-light);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-family: inherit;
+            resize: vertical;
+            transition: 0.2s;
+        }
+        .form-group textarea {
+            border-radius: 30px;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: 2px solid var(--accent-start);
+            border-color: transparent;
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 0.8rem;
+            margin-left: 1rem;
+            min-height: 1.2rem;
+        }
+        .btn-submit {
+            background: linear-gradient(145deg, var(--accent-start), var(--accent-end));
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 10px 20px var(--accent-glow);
+            transition: 0.2s;
+        }
+        .btn-submit:hover {
+            transform: scale(1.02);
+            filter: brightness(1.08);
+        }
+        .storage-box {
+            margin-top: 2rem;
+            background: var(--bg-surface-soft);
+            border-radius: 24px;
+            padding: 1.4rem;
+            border: 1px dashed var(--border-light);
+        }
+        .storage-box pre {
+            background: var(--bg-surface);
+            padding: 0.8rem;
+            border-radius: 16px;
+            overflow-x: auto;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            margin: 0.5rem 0;
+        }
+        .clear-btn {
+            background: transparent;
+            border: 1px solid var(--border-light);
+            padding: 0.4rem 1.4rem;
+            border-radius: 60px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .clear-btn:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-surface-soft);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-light);
+        }
+        /* empty footer is empty, but we keep background */
+    </style>
+</head>
+<body>
+    <!-- hero with perfectly fitted image -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>EduTrack</h1>
+            <p>AI facial recognition for effortless attendance. 99.8% accuracy, works everywhere.</p>
+            <div class="feature-badges">
+                <span class="badge">⚡ realtime</span>
+                <span class="badge">📱 cross‑device</span>
+                <span class="badge">🔒 encrypted</span>
+            </div>
+            <div class="cta-group">
+                <a href="#" class="btn btn-primary" id="freeTrialBtn">Start free trial</a>
+                <a href="#" class="btn btn-secondary" id="demoBtn">Live demo</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="img-wrapper">
+                <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="modern classroom with tablet">
+            </div>
+        </div>
+    </section>
+
+    <!-- stats + theme toggle -->
+    <div class="stats-panel">
+        <div class="stats" id="statsContainer">
+            <div class="stat"><h2 id="statAccuracy">99.8%</h2><p>accuracy</p></div>
+            <div class="stat"><h2 id="statStudents">2.1M</h2><p>students</p></div>
+            <div class="stat"><h2 id="statInstitutions">540</h2><p>institutions</p></div>
+        </div>
+        <div class="theme-toggle" id="themeToggle">
+            <button class="theme-btn light active" data-theme="light">☀️ Light</button>
+            <button class="theme-btn dark" data-theme="dark">🌙 Dark</button>
+        </div>
+    </div>
+
+    <!-- main interactive dashboard -->
+    <div class="dashboard">
+        <div class="split-layout">
+            <!-- LEFT: attendance cards -->
+            <div class="attendance-col">
+                <div class="section-header">
+                    <h2>📋 Today's attendance · <span id="classCount">3</span> classes</h2>
+                    <div class="add-subject">
+                        <input type="text" id="newSubjectInput" class="input-field" placeholder="class name" value="Design studio">
+                        <button class="btn-add" id="addSubjectBtn">➕ Add class</button>
+                    </div>
+                </div>
+                <div class="card-grid" id="attendanceGrid"></div>
+            </div>
+
+            <!-- RIGHT: contact form (validated + localStorage) -->
+            <div class="form-col">
+                <div class="form-card">
+                    <h3>📬 Contact</h3>
+                    <form id="contactForm" class="contact-form">
+                        <div class="form-group">
+                            <label>Full name *</label>
+                            <input type="text" id="name" name="name" placeholder="Alex Morgan">
+                            <div class="error-message" id="nameError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="email" name="email" placeholder="hello@edu.com">
+                            <div class="error-message" id="emailError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="message" rows="2" placeholder="I'd like a demo..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-submit">💾 save to localStorage</button>
+                    </form>
+                    <div class="storage-box">
+                        <p style="font-weight:600;">📦 stored data</p>
+                        <pre id="storagePreview">{}  (no data)</pre>
+                        <button class="clear-btn" id="clearStorageBtn">🗑️ clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer></footer> <!-- empty footer -->
+
+    <script>
+        (function() {
+            // ---------- ATTENDANCE CARDS (fully functional) ----------
+            let classRecords = [
+                { id: 101, className: 'Mathematics 101', present: 22, total: 24 },
+                { id: 102, className: 'Physics lab', present: 18, total: 18 },
+                { id: 103, className: 'Literature', present: 15, total: 21 }
+            ];
+            const grid = document.getElementById('attendanceGrid');
+            const classSpan = document.getElementById('classCount');
+            const lightBtn = document.querySelector('.theme-btn.light');
+            const darkBtn = document.querySelector('.theme-btn.dark');
+            const statAccuracy = document.getElementById('statAccuracy');
+            const statStudents = document.getElementById('statStudents');
+            const statInstitutions = document.getElementById('statInstitutions');
+            const freeTrialBtn = document.getElementById('freeTrialBtn');
+            const demoBtn = document.getElementById('demoBtn');
+            const addBtn = document.getElementById('addSubjectBtn');
+            const subjectInput = document.getElementById('newSubjectInput');
+
+            function generateId() { return Date.now() + Math.floor(Math.random()*1000); }
+
+            function renderCards() {
+                if (!grid) return;
+                let html = '';
+                classRecords.forEach(rec => {
+                    const percent = ((rec.present / rec.total)*100).toFixed(0);
+                    const badgeClass = rec.present === rec.total ? 'status-badge' : 'status-badge absent';
+                    const badgeText = rec.present === rec.total ? '✅ full' : (rec.present/rec.total >= 0.7 ? '⚠️ partial' : '❌ low');
+                    html += `<div class="attendance-card" data-id="${rec.id}">
+                        <div class="card-title">${rec.className} <span class="${badgeClass}">${badgeText}</span></div>
+                        <p>👥 present: <strong>${rec.present}/${rec.total}</strong> (${percent}%)</p>
+                        <div class="card-footer">
+                            <button class="small-btn mark-btn" data-action="increment" data-id="${rec.id}">➕ mark</button>
+                            <button class="small-btn mark-btn" data-action="decrement" data-id="${rec.id}">➖ remove</button>
+                            <button class="small-btn detail-btn" data-id="${rec.id}">📊 details</button>
+                        </div>
+                        <button class="delete-btn" data-action="delete" data-id="${rec.id}">✕</button>
+                    </div>`;
+                });
+                grid.innerHTML = html;
+                classSpan.textContent = classRecords.length;
+                const totalPresent = classRecords.reduce((acc,r)=>acc+r.present,0);
+                const totalCap = classRecords.reduce((acc,r)=>acc+r.total,0);
+                statAccuracy.textContent = totalCap ? (totalPresent/totalCap*100).toFixed(1)+'%' : '99.8%';
+                statStudents.textContent = (totalPresent + 18750).toLocaleString();
+                statInstitutions.textContent = 540 + classRecords.length;
+            }
+
+            function addSubject() {
+                let name = subjectInput.value.trim() || 'seminar';
+                classRecords.push({ id: generateId(), className: name, present: 8, total: 20 });
+                renderCards();
+                subjectInput.value = '';
+            }
+            function deleteSubject(id) { classRecords = classRecords.filter(r => r.id !== id); renderCards(); }
+
+            grid.addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const card = btn.closest('.attendance-card');
+                if (!card) return;
+                const id = parseInt(card.dataset.id);
+                if (btn.classList.contains('delete-btn') || btn.dataset.action==='delete') { deleteSubject(id); return; }
+                if (btn.classList.contains('mark-btn')) {
+                    const action = btn.dataset.action;
+                    const rec = classRecords.find(r=>r.id===id);
+                    if (!rec) return;
+                    if (action==='increment' && rec.present < rec.total) rec.present++;
+                    else if (action==='decrement' && rec.present>0) rec.present--;
+                    renderCards();
+                } else if (btn.classList.contains('detail-btn')) {
+                    const rec = classRecords.find(r=>r.id===id);
+                    alert(`📘 ${rec.className}\nPresent: ${rec.present}/${rec.total}\n${((rec.present/rec.total)*100).toFixed(1)}%`);
+                }
+            });
+            addBtn.addEventListener('click', addSubject);
+            subjectInput.addEventListener('keypress', e => { if (e.key==='Enter') addSubject(); });
+
+            // theme
+            function setTheme(theme) {
+                document.body.classList.toggle('dark', theme==='dark');
+                lightBtn.classList.toggle('active', theme==='light');
+                darkBtn.classList.toggle('active', theme==='dark');
+                localStorage.setItem('edutrack-theme', theme);
+            }
+            lightBtn.addEventListener('click', ()=>setTheme('light'));
+            darkBtn.addEventListener('click', ()=>setTheme('dark'));
+            setTheme(localStorage.getItem('edutrack-theme') || 'light');
+
+            freeTrialBtn.addEventListener('click', e=>{ e.preventDefault(); alert('✨ trial demo (interactive)'); });
+            demoBtn.addEventListener('click', e=>{ e.preventDefault(); alert('📽️ facial recognition simulation'); });
+            document.getElementById('statsContainer').addEventListener('dblclick', ()=>{
+                statAccuracy.textContent = (parseFloat(statAccuracy.textContent)+0.1).toFixed(1)+'%';
+            });
+
+            // ---------- FORM & LOCALSTORAGE (validated) ----------
+            const form = document.getElementById('contactForm');
+            const nameInp = document.getElementById('name');
+            const emailInp = document.getElementById('email');
+            const msgInp = document.getElementById('message');
+            const nameErr = document.getElementById('nameError');
+            const emailErr = document.getElementById('emailError');
+            const storagePreview = document.getElementById('storagePreview');
+            const clearBtn = document.getElementById('clearStorageBtn');
+
+            function validateEmail(email) { return /\S+@\S+\.\S+/.test(email); }
+            function updatePreview() {
+                const raw = localStorage.getItem('formData');
+                if (raw) { try { storagePreview.textContent = JSON.stringify(JSON.parse(raw), null, 2); } catch { storagePreview.textContent = '{ invalid }'; } }
+                else { storagePreview.textContent = '{}  (no data)'; }
+            }
+            clearBtn.addEventListener('click', ()=>{ localStorage.removeItem('formData'); updatePreview(); });
+
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                nameErr.textContent = ''; emailErr.textContent = '';
+                const name = nameInp.value.trim();
+                const email = emailInp.value.trim();
+                const msg = msgInp.value.trim();
+                let ok = true;
+                if (!name) { nameErr.textContent = 'name required'; ok = false; }
+                if (!email) { emailErr.textContent = 'email required'; ok = false; }
+                else if (!validateEmail(email)) { emailErr.textContent = 'valid email (user@domain.com)'; ok = false; }
+                if (ok) {
+                    const data = { name, email, message: msg };
+                    localStorage.setItem('formData', JSON.stringify(data));
+                    alert('✅ saved to localStorage');
+                    updatePreview();
+                } else alert('❌ fix errors');
+            });
+
+            // prefill from storage
+            const stored = localStorage.getItem('formData');
+            if (stored) {
+                try {
+                    const d = JSON.parse(stored);
+                    nameInp.value = d.name || '';
+                    emailInp.value = d.email || '';
+                    msgInp.value = d.message || '';
+                } catch (e) {}
+            }
+            updatePreview();
+            renderCards(); // initial
+        })();
+    </script>
+</body>
+</html>
